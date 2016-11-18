@@ -45,10 +45,14 @@ namespace Microsoft.AspNetCore.SignalR.Client
             var serverToClient = _pipelineFactory.Create();
 
             // Transport reads from clientToServer and writes to serverToClient
-            var transportPipe = new PipelineConnection(clientToServer, serverToClient);
+            var transportPipe = new PipelineConnection(
+                input: clientToServer, 
+                output: serverToClient);
 
             // Consumer reads from serverToClient and writes to clientToServer
-            var consumerPipe = new PipelineConnection(serverToClient, clientToServer);
+            var consumerPipe = new PipelineConnection(
+                input: serverToClient, 
+                output: clientToServer);
 
             var connectedUrl = Utils.AppendQueryString(url, "id=" + connectionId);
 

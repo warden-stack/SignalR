@@ -3,6 +3,7 @@
 
 using System;
 using System.IO.Pipelines;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
@@ -71,25 +72,28 @@ namespace ClientSample
         private static async Task StartReceiving(ILogger logger, Connection connection, CancellationToken cancellationToken)
         {
             logger.LogInformation("Receive loop starting");
-            while (!cancellationToken.IsCancellationRequested)
+            using (cancellationToken.Register(() => connection.Input.Complete()))
             {
-                var result = await connection.Input.ReadAsync();
-                var buffer = result.Buffer;
-                try
+                while (!cancellationToken.IsCancellationRequested)
                 {
-                    if (!buffer.IsEmpty)
+                    var result = await connection.Input.ReadAsync();
+                    var buffer = result.Buffer;
+                    try
                     {
-                        var message = Encoding.UTF8.GetString(buffer.ToArray());
-                        logger.LogInformation("Received: {0}", message);
+                        if (!buffer.IsEmpty)
+                        {
+                            var message = Encoding.UTF8.GetString(buffer.ToArray());
+                            logger.LogInformation("Received: {0}", message);
+                        }
                     }
-                }
-                finally
-                {
-                    connection.Input.Advance(buffer.End);
-                }
-                if (result.IsCompleted)
-                {
-                    break;
+                    finally
+                    {
+                        connection.Input.Advance(buffer.End);
+                    }
+                    if (result.IsCompleted)
+                    {
+                        break;
+                    }
                 }
             }
             logger.LogInformation("Receive loop terminated");
