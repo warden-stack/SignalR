@@ -2,68 +2,97 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Net.WebSockets;
-using System.Threading;
+using System.IO.Pipelines;
+using System.Net.Http;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Logging;
 
 namespace ClientSample
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static void Main(string[] args) => MainAsync(args).Wait();
+
+        public static async Task MainAsync(string[] args)
         {
-            RunWebSockets().GetAwaiter().GetResult();
+            var baseUrl = "http://localhost:5000/chat";
+            if (args.Length > 0)
+            {
+                baseUrl = args[0];
+            }
+
+            var loggerFactory = new LoggerFactory();
+            loggerFactory.AddConsole(LogLevel.Debug);
+            var logger = loggerFactory.CreateLogger<Program>();
+
+            using (var httpClient = new HttpClient(new LoggingMessageHandler(loggerFactory, new HttpClientHandler())))
+            using (var pipelineFactory = new PipelineFactory())
+            {
+                var connectionFactory = new ConnectionFactory(httpClient, pipelineFactory, loggerFactory);
+                logger.LogInformation("Connecting to {0}", baseUrl);
+                var transport = new LongPollingTransport(httpClient, loggerFactory);
+                using (var connection = await connectionFactory.ConnectAsync(new Uri(baseUrl), transport))
+                {
+                    logger.LogInformation("Connected to {0}", baseUrl);
+
+                    var cts = new CancellationTokenSource();
+                    Console.CancelKeyPress += (sender, a) =>
+                    {
+                        a.Cancel = true;
+                        logger.LogInformation("Stopping loops...");
+                        cts.Cancel();
+                    };
+
+                    // Ready to start the loops
+                    var receive = StartReceiving(loggerFactory.CreateLogger("ReceiveLoop"), connection, cts.Token);
+                    var send = StartSending(loggerFactory.CreateLogger("SendLoop"), connection, cts.Token);
+
+                    await Task.WhenAll(receive, send);
+                }
+            }
         }
 
-        private static async Task RunWebSockets()
+        private static async Task StartSending(ILogger logger, Connection connection, CancellationToken cancellationToken)
         {
-            var ws = new ClientWebSocket();
-            await ws.ConnectAsync(new Uri("ws://localhost:5000/chat/ws"), CancellationToken.None);
-
-            Console.WriteLine("Connected");
-
-            var sending = Task.Run(async () =>
+            logger.LogInformation("Send loop starting");
+            while (!cancellationToken.IsCancellationRequested)
             {
-                string line;
-                while ((line = Console.ReadLine()) != null)
-                {
-                    var bytes = Encoding.UTF8.GetBytes(line);
-                    await ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, endOfMessage: true, cancellationToken: CancellationToken.None);
-                }
+                var line = Console.ReadLine();
+                logger.LogInformation("Sending: {0}", line);
 
-                await ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
-            });
-
-            var receiving = Receiving(ws);
-
-            await Task.WhenAll(sending, receiving);
+                await connection.Output.WriteAsync(Encoding.UTF8.GetBytes(line));
+            }
+            logger.LogInformation("Send loop terminated");
         }
 
-        private static async Task Receiving(ClientWebSocket ws)
+        private static async Task StartReceiving(ILogger logger, Connection connection, CancellationToken cancellationToken)
         {
-            var buffer = new byte[2048];
-
-            while (true)
+            logger.LogInformation("Receive loop starting");
+            while (!cancellationToken.IsCancellationRequested)
             {
-                var result = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-
-                if (result.MessageType == WebSocketMessageType.Text)
+                var result = await connection.Input.ReadAsync();
+                var buffer = result.Buffer;
+                try
                 {
-                    Console.WriteLine(Encoding.UTF8.GetString(buffer, 0, result.Count));
+                    if (!buffer.IsEmpty)
+                    {
+                        var message = Encoding.UTF8.GetString(buffer.ToArray());
+                        logger.LogInformation("Received: {0}", message);
+                    }
                 }
-                else if (result.MessageType == WebSocketMessageType.Binary)
+                finally
                 {
+                    connection.Input.Advance(buffer.End);
                 }
-                else if (result.MessageType == WebSocketMessageType.Close)
+                if (result.IsCompleted)
                 {
-                    await ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
                     break;
                 }
-
             }
+            logger.LogInformation("Receive loop terminated");
         }
     }
 }

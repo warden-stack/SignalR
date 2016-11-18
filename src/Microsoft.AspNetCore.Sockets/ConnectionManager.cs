@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Threading;
 
@@ -73,7 +74,11 @@ namespace Microsoft.AspNetCore.Sockets
 
         private static void Scan(object state)
         {
-            ((ConnectionManager)state).Scan();
+            // Don't trim timed out connections if the debugger is attached
+            if (!Debugger.IsAttached)
+            {
+                ((ConnectionManager)state).Scan();
+            }
         }
 
         private void Scan()
