@@ -17,11 +17,17 @@ namespace Microsoft.AspNetCore.SignalR.Client
 
         internal static Uri AppendQueryString(Uri url, string qs)
         {
+            if (string.IsNullOrEmpty(qs))
+            {
+                return url;
+            }
+
             var builder = new UriBuilder(url);
-            if(string.IsNullOrEmpty(builder.Query))
+            if (string.IsNullOrEmpty(builder.Query))
             {
                 builder.Query += "?";
-            } else
+            }
+            else
             {
                 builder.Query += "&";
             }

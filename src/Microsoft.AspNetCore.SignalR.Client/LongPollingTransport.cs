@@ -104,7 +104,7 @@ namespace Microsoft.AspNetCore.SignalR.Client
                     {
                         var result = await _pipeline.Input.ReadAsync();
                         var buffer = result.Buffer;
-                        if (buffer.Length == 0 || result.IsCompleted)
+                        if (buffer.IsEmpty || result.IsCompleted)
                         {
                             // No more data to send
                             break;

@@ -32,10 +32,9 @@ namespace ClientSample
             using (var httpClient = new HttpClient(new LoggingMessageHandler(loggerFactory, new HttpClientHandler())))
             using (var pipelineFactory = new PipelineFactory())
             {
-                var connectionFactory = new ConnectionFactory(httpClient, pipelineFactory, loggerFactory);
                 logger.LogInformation("Connecting to {0}", baseUrl);
                 var transport = new LongPollingTransport(httpClient, loggerFactory);
-                using (var connection = await connectionFactory.ConnectAsync(new Uri(baseUrl), transport))
+                using (var connection = await Connection.ConnectAsync(new Uri(baseUrl), transport, httpClient, pipelineFactory, loggerFactory))
                 {
                     logger.LogInformation("Connected to {0}", baseUrl);
 

@@ -74,11 +74,7 @@ namespace Microsoft.AspNetCore.Sockets
 
         private static void Scan(object state)
         {
-            // Don't trim timed out connections if the debugger is attached
-            if (!Debugger.IsAttached)
-            {
-                ((ConnectionManager)state).Scan();
-            }
+            ((ConnectionManager)state).Scan();
         }
 
         private void Scan()
