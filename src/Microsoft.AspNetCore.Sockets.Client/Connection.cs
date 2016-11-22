@@ -4,7 +4,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
-namespace Microsoft.AspNetCore.SignalR.Client
+namespace Microsoft.AspNetCore.Sockets.Client
 {
     public class Connection : IPipelineConnection
     {
@@ -14,28 +14,9 @@ namespace Microsoft.AspNetCore.SignalR.Client
 
         public Uri Url { get; }
 
-        public Connection(Uri url, ITransport transport, IPipelineConnection consumerPipe, ILogger logger)
+        // TODO: Review. This is really only designed to be used from ConnectAsync
+        private Connection(Uri url, ITransport transport, IPipelineConnection consumerPipe, ILogger logger)
         {
-            if (url == null)
-            {
-                throw new ArgumentNullException(nameof(url));
-            }
-
-            if (transport == null)
-            {
-                throw new ArgumentNullException(nameof(transport));
-            }
-
-            if (consumerPipe == null)
-            {
-                throw new ArgumentNullException(nameof(consumerPipe));
-            }
-
-            if (logger == null)
-            {
-                throw new ArgumentNullException(nameof(logger));
-            }
-
             Url = url;
 
             _logger = logger;
@@ -59,6 +40,31 @@ namespace Microsoft.AspNetCore.SignalR.Client
 
         public static async Task<Connection> ConnectAsync(Uri url, ITransport transport, HttpClient httpClient, PipelineFactory pipelineFactory, ILoggerFactory loggerFactory)
         {
+            if (url == null)
+            {
+                throw new ArgumentNullException(nameof(url));
+            }
+
+            if (transport == null)
+            {
+                throw new ArgumentNullException(nameof(transport));
+            }
+
+            if (httpClient == null)
+            {
+                throw new ArgumentNullException(nameof(httpClient));
+            }
+
+            if (pipelineFactory == null)
+            {
+                throw new ArgumentNullException(nameof(pipelineFactory));
+            }
+
+            if (loggerFactory == null)
+            {
+                throw new ArgumentNullException(nameof(loggerFactory));
+            }
+
             var logger = loggerFactory.CreateLogger<Connection>();
             var getIdUrl = Utils.AppendPath(url, "getid");
 

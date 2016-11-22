@@ -1,6 +1,6 @@
 ﻿using System.IO.Pipelines;
 
-namespace Microsoft.AspNetCore.SignalR.Client
+namespace Microsoft.AspNetCore.Sockets.Client
 {
     internal class PipelineConnection : IPipelineConnection
     {

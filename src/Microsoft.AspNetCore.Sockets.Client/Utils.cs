@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Microsoft.AspNetCore.SignalR.Client
+namespace Microsoft.AspNetCore.Sockets.Client
 {
     internal static class Utils
     {

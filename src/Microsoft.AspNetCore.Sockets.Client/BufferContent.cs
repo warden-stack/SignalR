@@ -4,7 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace Microsoft.AspNetCore.SignalR.Client
+namespace Microsoft.AspNetCore.Sockets.Client
 {
     internal class ReadableBufferContent : HttpContent
     {

@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Microsoft.AspNetCore.SignalR.Client
+namespace Microsoft.AspNetCore.Sockets.Client
 {
     internal class NullLoggerFactory : ILoggerFactory
     {

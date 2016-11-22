@@ -3,12 +3,11 @@
 
 using System;
 using System.IO.Pipelines;
-using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.AspNetCore.Sockets.Client;
 using Microsoft.Extensions.Logging;
 
 namespace ClientSample

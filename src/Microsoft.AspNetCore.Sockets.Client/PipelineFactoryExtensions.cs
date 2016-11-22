@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO.Pipelines;
 
-namespace Microsoft.AspNetCore.SignalR.Client
+namespace Microsoft.AspNetCore.Sockets.Client
 {
     // TODO: Move to System.IO.Pipelines
     public static class PipelineFactoryExtensions

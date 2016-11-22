@@ -4,6 +4,7 @@
 using System;
 using System.IO;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -18,12 +19,13 @@ namespace Microsoft.AspNetCore.SignalR
         {
         }
 
-        public Task<InvocationDescriptor> ReadInvocationDescriptorAsync(Stream stream, Func<string, Type[]> getParams)
+        public Task<InvocationDescriptor> ReadInvocationDescriptorAsync(Stream stream, Func<string, Type[]> getParams, CancellationToken cancellationToken)
         {
             var reader = new JsonTextReader(new StreamReader(stream));
             // REVIEW: Task.Run()
             return Task.Run(() =>
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var jsonInvocation = _serializer.Deserialize<JsonNetInvocationDescriptor>(reader);
                 if (jsonInvocation == null)
                 {
@@ -46,16 +48,40 @@ namespace Microsoft.AspNetCore.SignalR
                 }
 
                 return invocation;
-            });
+            }, cancellationToken);
         }
 
-        public Task WriteInvocationResultAsync(InvocationResultDescriptor resultDescriptor, Stream stream)
+        public Task<InvocationResultDescriptor> ReadInvocationResultDescriptorAsync(Stream stream, Func<string, Type> invocationIdToResultType, CancellationToken cancellationToken)
+        {
+            var reader = new JsonTextReader(new StreamReader(stream));
+            // REVIEW: Task.Run()
+            return Task.Run(() =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var jsonResult = _serializer.Deserialize<JsonNetInvocationResultDescriptor>(reader);
+                if (jsonResult == null)
+                {
+                    return null;
+                }
+
+                var result = new InvocationResultDescriptor()
+                {
+                    Id = jsonResult.Id,
+                    Result = jsonResult.Result.ToObject(invocationIdToResultType(jsonResult.Id), _serializer),
+                    Error = jsonResult.Error
+                };
+
+                return result;
+            }, cancellationToken);
+        }
+
+        public Task WriteInvocationResultAsync(InvocationResultDescriptor resultDescriptor, Stream stream, CancellationToken cancellationToken)
         {
             Write(resultDescriptor, stream);
             return Task.FromResult(0);
         }
 
-        public Task WriteInvocationDescriptorAsync(InvocationDescriptor invocationDescriptor, Stream stream)
+        public Task WriteInvocationDescriptorAsync(InvocationDescriptor invocationDescriptor, Stream stream, CancellationToken cancellationToken)
         {
             Write(invocationDescriptor, stream);
             return Task.FromResult(0);
@@ -66,6 +92,15 @@ namespace Microsoft.AspNetCore.SignalR
             var writer = new JsonTextWriter(new StreamWriter(stream));
             _serializer.Serialize(writer, value);
             writer.Flush();
+        }
+
+        private class JsonNetInvocationResultDescriptor
+        {
+            public string Id { get; set; }
+
+            public JObject Result { get; set; }
+
+            public string Error { get; set; }
         }
 
         private class JsonNetInvocationDescriptor

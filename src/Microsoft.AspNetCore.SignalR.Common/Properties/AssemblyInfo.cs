@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 // associated with an assembly.
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Microsoft.AspNetCore.SignalR.Client")]
+[assembly: AssemblyProduct("Microsoft.AspNetCore.SignalR.Common")]
 [assembly: AssemblyTrademark("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible
@@ -16,4 +16,4 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("354335ab-cee9-4434-a641-78058f6efe56")]
+[assembly: Guid("e37324ff-6baf-4243-ba80-7c024cf5f29d")]

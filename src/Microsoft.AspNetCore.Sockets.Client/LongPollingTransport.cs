@@ -5,9 +5,10 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Logging;
 
-namespace Microsoft.AspNetCore.SignalR.Client
+namespace Microsoft.AspNetCore.Sockets.Client
 {
     public class LongPollingTransport : ITransport
     {
@@ -46,7 +47,7 @@ namespace Microsoft.AspNetCore.SignalR.Client
             pipeline.Output.Writing.ContinueWith(_ =>
             {
                 _pollCts.Cancel();
-                return Task.CompletedTask;
+                return TaskCache.CompletedTask;
             });
 
             // Start sending and polling
@@ -54,7 +55,7 @@ namespace Microsoft.AspNetCore.SignalR.Client
             _poller = Poll(Utils.AppendPath(url, "poll"), _pollCts.Token);
             Running = Task.WhenAll(_sender, _poller);
 
-            return Task.CompletedTask;
+            return TaskCache.CompletedTask;
         }
 
         private async Task Poll(Uri pollUrl, CancellationToken cancellationToken)

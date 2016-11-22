@@ -1,6 +1,6 @@
 ﻿{
   "version": "1.0.0-*",
-  "description": "Client for ASP.NET Core SignalR",
+  "description": "Common serialiation primitives for SignalR Clients Servers",
 
   "packOptions": {
     "repository": {
@@ -22,9 +22,8 @@
   },
 
   "dependencies": {
-    "Microsoft.AspNetCore.SignalR.Common": "1.0.0-*",
-    "Microsoft.AspNetCore.Sockets.Client": "1.0.0-*",
-    "NETStandard.Library": "1.6.1-*"
+    "NETStandard.Library": "1.6.1-*",
+    "Newtonsoft.Json": "9.0.1"
   },
 
   "frameworks": {
