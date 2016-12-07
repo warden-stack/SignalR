@@ -14,15 +14,14 @@
     "xunit": "2.2.0-*"
   },
   "frameworks": {
-    "netcoreapp1.1": {
+    "netcoreapp1.2": {
       "dependencies": {
         "Microsoft.NETCore.App": {
           "version": "1.2.0-*",
           "type": "platform"
         }
       }
-    },
-    "net451": { }
+    }
   },
   "testRunner": "xunit"
 }

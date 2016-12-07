@@ -7,6 +7,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Sockets;
+using Microsoft.AspNetCore.Sockets.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Moq.Protected;
@@ -27,10 +28,10 @@ namespace Microsoft.AspNetCore.SignalR.Tests
             {
                 var endPointTask = endPoint.OnConnectedAsync(connectionWrapper.Connection);
 
-                await connectionWrapper.HttpConnection.Input.ReadingStarted;
+                await connectionWrapper.ApplicationStartedReading;
 
                 // kill the connection
-                connectionWrapper.Connection.Channel.Dispose();
+                connectionWrapper.ConnectionState.Dispose();
 
                 await endPointTask;
 
@@ -56,13 +57,13 @@ namespace Microsoft.AspNetCore.SignalR.Tests
             {
                 var endPointTask = endPoint.OnConnectedAsync(connectionWrapper.Connection);
 
-                await connectionWrapper.HttpConnection.Input.ReadingStarted;
+                await connectionWrapper.ApplicationStartedReading;
 
-                var buffer = connectionWrapper.HttpConnection.Input.Alloc();
+                var buffer = connectionWrapper.ConnectionState.Application.Output.Alloc();
                 buffer.Write(Encoding.UTF8.GetBytes("0xdeadbeef"));
                 await buffer.FlushAsync();
 
-                connectionWrapper.Connection.Channel.Dispose();
+                connectionWrapper.Dispose();
 
                 await endPointTask;
 
@@ -114,27 +115,28 @@ namespace Microsoft.AspNetCore.SignalR.Tests
         private class ConnectionWrapper : IDisposable
         {
             private PipelineFactory _factory;
-            private HttpConnection _httpConnection;
 
-            public Connection Connection;
-            public HttpConnection HttpConnection => (HttpConnection)Connection.Channel;
+            public StreamingConnectionState ConnectionState;
+
+            public StreamingConnection Connection => ConnectionState.Connection;
+
+            // Still kinda gross...
+            public Task ApplicationStartedReading => ((PipelineReaderWriter)Connection.Transport.Input).ReadingStarted;
 
             public ConnectionWrapper(string format = "json")
             {
                 _factory = new PipelineFactory();
-                _httpConnection = new HttpConnection(_factory);
 
-                var connectionManager = new ConnectionManager();
+                var connectionManager = new ConnectionManager(_factory);
 
-                Connection = connectionManager.AddNewConnection(_httpConnection).Connection;
-                Connection.Metadata["formatType"] = format;
-                Connection.User = new ClaimsPrincipal(new ClaimsIdentity());
+                ConnectionState = (StreamingConnectionState)connectionManager.CreateConnection(ConnectionMode.Streaming);
+                ConnectionState.Connection.Metadata["formatType"] = format;
+                ConnectionState.Connection.User = new ClaimsPrincipal(new ClaimsIdentity());
             }
 
             public void Dispose()
             {
-                Connection.Channel.Dispose();
-                _httpConnection.Dispose();
+                ConnectionState.Dispose();
                 _factory.Dispose();
             }
         }

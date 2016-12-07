@@ -25,10 +25,10 @@ namespace Microsoft.AspNetCore.SignalR
         }
     }
 
-    public class HubEndPoint<THub, TClient> : EndPoint, IInvocationBinder where THub : Hub<TClient>
+    public class HubEndPoint<THub, TClient> : StreamingEndPoint, IInvocationBinder where THub : Hub<TClient>
     {
-        private readonly Dictionary<string, Func<Connection, InvocationDescriptor, Task<InvocationResultDescriptor>>> _callbacks
-            = new Dictionary<string, Func<Connection, InvocationDescriptor, Task<InvocationResultDescriptor>>>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Func<StreamingConnection, InvocationDescriptor, Task<InvocationResultDescriptor>>> _callbacks
+            = new Dictionary<string, Func<StreamingConnection, InvocationDescriptor, Task<InvocationResultDescriptor>>>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Type[]> _paramTypes = new Dictionary<string, Type[]>();
 
         private readonly HubLifetimeManager<THub> _lifetimeManager;
@@ -52,7 +52,7 @@ namespace Microsoft.AspNetCore.SignalR
             DiscoverHubMethods();
         }
 
-        public override async Task OnConnectedAsync(Connection connection)
+        public override async Task OnConnectedAsync(StreamingConnection connection)
         {
             // TODO: Dispatch from the caller
             await Task.Yield();
@@ -82,8 +82,8 @@ namespace Microsoft.AspNetCore.SignalR
             {
                 _logger.LogError(0, ex, "Error when processing requests.");
                 exception = ex;
-                connection.Channel.Input.Complete(exception);
-                connection.Channel.Output.Complete(exception);
+                connection.Transport.Input.Complete(exception);
+                connection.Transport.Output.Complete(exception);
             }
             finally
             {
@@ -106,9 +106,9 @@ namespace Microsoft.AspNetCore.SignalR
             }
         }
 
-        private async Task DispatchMessagesAsync(Connection connection)
+        private async Task DispatchMessagesAsync(StreamingConnection connection)
         {
-            var stream = connection.Channel.GetStream();
+            var stream = connection.Transport.GetStream();
             var invocationAdapter = _registry.GetInvocationAdapter(connection.Metadata.Get<string>("formatType"));
 
             while (true)
@@ -128,7 +128,7 @@ namespace Microsoft.AspNetCore.SignalR
                 }
 
                 InvocationResultDescriptor result;
-                Func<Connection, InvocationDescriptor, Task<InvocationResultDescriptor>> callback;
+                Func<StreamingConnection, InvocationDescriptor, Task<InvocationResultDescriptor>> callback;
                 if (_callbacks.TryGetValue(invocationDescriptor.Method, out callback))
                 {
                     result = await callback(connection, invocationDescriptor);
@@ -149,7 +149,7 @@ namespace Microsoft.AspNetCore.SignalR
             }
         }
 
-        private void InitializeHub(THub hub, Connection connection)
+        private void InitializeHub(THub hub, StreamingConnection connection)
         {
             hub.Clients = _hubContext.Clients;
             hub.Context = new HubCallerContext(connection);
