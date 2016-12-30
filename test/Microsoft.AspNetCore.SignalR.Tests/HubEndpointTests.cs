@@ -6,13 +6,11 @@ using System.IO;
 using System.IO.Pipelines;
 using System.Security.Claims;
 using System.Threading;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Sockets;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Internal;
 using Moq;
-using Moq.Protected;
 using Newtonsoft.Json;
 using Xunit;
 
@@ -62,15 +60,15 @@ namespace Microsoft.AspNetCore.SignalR.Tests
 
                 await connectionWrapper.HttpConnection.Input.ReadingStarted;
 
-                var buffer = connectionWrapper.HttpConnection.Input.Alloc();
-                buffer.Write(Encoding.UTF8.GetBytes("0xdeadbeef"));
-                await buffer.FlushAsync();
+                var invocationAdapter = serviceProvider.GetService<InvocationAdapterRegistry>();
+                var adapter = invocationAdapter.GetInvocationAdapter("json");
+                await SendRequest(connectionWrapper.HttpConnection, adapter, "0xdeadbeef");
 
                 connectionWrapper.Connection.Channel.Dispose();
 
                 await endPointTask;
 
-                Mock.Get(hub).Verify(h => h.OnDisconnectedAsync(It.IsNotNull<Exception>()), Times.Once());
+                Mock.Get(hub).Verify(h => h.OnDisconnectedAsync(It.IsNotNull<InvalidOperationException>()), Times.Once());
             }
         }
 
@@ -235,12 +233,9 @@ namespace Microsoft.AspNetCore.SignalR.Tests
 
                 await SendRequest(connectionWrapper.HttpConnection, adapter, "OnDisconnectedAsync");
 
-                // kill the connection
-                connectionWrapper.Connection.Channel.Dispose();
-
                 try
                 {
-                    await endPointTask;
+                    await connectionWrapper.HttpConnection.Output.ReadAsync();
                     Assert.True(false);
                 }
                 catch (InvalidOperationException ex)
@@ -478,7 +473,7 @@ namespace Microsoft.AspNetCore.SignalR.Tests
                 return $"{b}, {i}, {c}, {s}";
             }
 
-            public override Task OnDisconnectedAsync()
+            public override Task OnDisconnectedAsync(Exception e)
             {
                 return TaskCache.CompletedTask;
             }

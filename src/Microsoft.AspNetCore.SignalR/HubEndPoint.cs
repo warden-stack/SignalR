@@ -246,7 +246,6 @@ namespace Microsoft.AspNetCore.SignalR
             }
 
             return true;
-            //return m.IsPublic;// && typeof(Hub<IClientProxy>) != m.GetBaseDefinition().DeclaringType;
         }
 
         Type IInvocationBinder.GetReturnType(string invocationId)
