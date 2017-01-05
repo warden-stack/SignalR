@@ -12,6 +12,6 @@
   },
 
   "frameworks": {
-    "netcoreapp1.2": {}
+    "netcoreapp1.1": {}
   }
 }
