@@ -22,7 +22,14 @@
         }
       }
     },
-    "net46": {}
+    "net46": {
+      "dependencies": {
+        "System.Security.Claims": {
+          "version": "4.0.1",
+          "type": "build"
+        }
+      }
+    }
   },
   "testRunner": "xunit"
 }
