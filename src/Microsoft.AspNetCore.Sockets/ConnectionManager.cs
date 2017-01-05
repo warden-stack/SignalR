@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.AspNetCore.Sockets
 {
@@ -87,11 +88,7 @@ namespace Microsoft.AspNetCore.Sockets
                     ConnectionState s;
                     if (_connections.TryRemove(c.Key, out s))
                     {
-                        s?.Close();
-                    }
-                    else
-                    {
-
+                        s?.Close().ContinueWith(t => { }, TaskContinuationOptions.OnlyOnFaulted);
                     }
                 }
             }
@@ -110,7 +107,7 @@ namespace Microsoft.AspNetCore.Sockets
                     // Longpolling connections should do this
                     if (s.Close != null)
                     {
-                        s.Close();
+                        s.Close().ContinueWith(t => { }, TaskContinuationOptions.OnlyOnFaulted);
                     }
                     else
                     {

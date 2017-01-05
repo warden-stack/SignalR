@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Threading.Tasks;
 
 namespace Microsoft.AspNetCore.Sockets
 {
@@ -10,7 +11,7 @@ namespace Microsoft.AspNetCore.Sockets
         public Connection Connection { get; set; }
 
         // These are used for long polling mostly
-        public Action Close { get; set; }
+        public Func<Task> Close { get; set; }
         public DateTimeOffset LastSeen { get; set; }
         public bool Active { get; set; } = true;
     }
