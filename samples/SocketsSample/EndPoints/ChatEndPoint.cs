@@ -13,7 +13,7 @@ namespace SocketsSample
 {
     public class ChatEndPoint : StreamingEndPoint
     {
-        public ConnectionList Connections { get; } = new ConnectionList();
+        public ConnectionList<StreamingConnection> Connections { get; } = new ConnectionList<StreamingConnection>();
 
         public override async Task OnConnectedAsync(StreamingConnection connection)
         {
@@ -55,7 +55,7 @@ namespace SocketsSample
         {
             var tasks = new List<Task>(Connections.Count);
 
-            foreach (var c in Connections.Cast<StreamingConnection>())
+            foreach (var c in Connections)
             {
                 tasks.Add(c.Transport.Output.WriteAsync(payload));
             }

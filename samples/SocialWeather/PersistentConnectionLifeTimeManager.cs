@@ -13,26 +13,26 @@ namespace SocialWeather
     public class PersistentConnectionLifeTimeManager
     {
         private readonly FormatterResolver _formatterResolver;
-        private readonly ConnectionList _connectionList = new ConnectionList();
+        private readonly ConnectionList<StreamingConnection> _connectionList = new ConnectionList<StreamingConnection>();
 
         public PersistentConnectionLifeTimeManager(FormatterResolver formatterResolver)
         {
             _formatterResolver = formatterResolver;
         }
 
-        public void OnConnectedAsync(Connection connection)
+        public void OnConnectedAsync(StreamingConnection connection)
         {
             _connectionList.Add(connection);
         }
 
-        public void OnDisconnectedAsync(Connection connection)
+        public void OnDisconnectedAsync(StreamingConnection connection)
         {
             _connectionList.Remove(connection);
         }
 
         public async Task SendToAllAsync<T>(T data)
         {
-            foreach (var connection in _connectionList.Cast<StreamingConnection>())
+            foreach (var connection in _connectionList)
             {
                 var formatter = _formatterResolver.GetFormatter<T>(connection.Metadata.Get<string>("formatType"));
                 await formatter.WriteAsync(data, connection.Transport.GetStream());
@@ -54,7 +54,7 @@ namespace SocialWeather
             throw new NotImplementedException();
         }
 
-        public void AddGroupAsync(Connection connection, string groupName)
+        public void AddGroupAsync(StreamingConnection connection, string groupName)
         {
             var groups = connection.Metadata.GetOrAdd("groups", _ => new HashSet<string>());
             lock (groups)
@@ -63,7 +63,7 @@ namespace SocialWeather
             }
         }
 
-        public void RemoveGroupAsync(Connection connection, string groupName)
+        public void RemoveGroupAsync(StreamingConnection connection, string groupName)
         {
             var groups = connection.Metadata.Get<HashSet<string>>("groups");
             if (groups != null)

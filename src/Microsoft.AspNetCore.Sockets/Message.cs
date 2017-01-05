@@ -21,7 +21,7 @@ namespace Microsoft.AspNetCore.Sockets
 
         public void Dispose()
         {
-            ((IDisposable)Payload).Dispose();
+            Payload.Dispose();
         }
     }
 }

@@ -13,7 +13,7 @@ namespace Microsoft.AspNetCore.SignalR
 {
     public class DefaultHubLifetimeManager<THub> : HubLifetimeManager<THub>
     {
-        private readonly ConnectionList _connections = new ConnectionList();
+        private readonly ConnectionList<StreamingConnection> _connections = new ConnectionList<StreamingConnection>();
         private readonly InvocationAdapterRegistry _registry;
 
         public DefaultHubLifetimeManager(InvocationAdapterRegistry registry)

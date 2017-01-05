@@ -12,7 +12,7 @@ namespace Microsoft.AspNetCore.Sockets
 
         internal protected override Task OnConnectedAsync(Connection connection)
         {
-            if(connection.Mode != Mode)
+            if (connection.Mode != Mode)
             {
                 throw new InvalidOperationException($"Connection mode does not match endpoint mode. Connection mode is '{connection.Mode}', endpoint mode is '{Mode}'");
             }

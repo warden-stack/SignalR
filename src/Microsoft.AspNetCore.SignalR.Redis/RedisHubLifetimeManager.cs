@@ -20,7 +20,7 @@ namespace Microsoft.AspNetCore.SignalR.Redis
 {
     public class RedisHubLifetimeManager<THub> : HubLifetimeManager<THub>, IDisposable
     {
-        private readonly ConnectionList _connections = new ConnectionList();
+        private readonly ConnectionList<StreamingConnection> _connections = new ConnectionList<StreamingConnection>();
         // TODO: Investigate "memory leak" entries never get removed
         private readonly ConcurrentDictionary<string, GroupData> _groups = new ConcurrentDictionary<string, GroupData>();
         private readonly InvocationAdapterRegistry _registry;
@@ -300,7 +300,7 @@ namespace Microsoft.AspNetCore.SignalR.Redis
         private class GroupData
         {
             public SemaphoreSlim Lock = new SemaphoreSlim(1, 1);
-            public ConnectionList Connections = new ConnectionList();
+            public ConnectionList<StreamingConnection> Connections = new ConnectionList<StreamingConnection>();
         }
     }
 }

@@ -13,7 +13,7 @@ namespace SocketsSample.EndPoints
 {
     public class MessagesEndPoint : MessagingEndPoint
     {
-        public ConnectionList Connections { get; } = new ConnectionList();
+        public ConnectionList<MessagingConnection> Connections { get; } = new ConnectionList<MessagingConnection>();
 
         public override async Task OnConnectedAsync(MessagingConnection connection)
         {
@@ -49,7 +49,7 @@ namespace SocketsSample.EndPoints
         {
             var tasks = new List<Task>(Connections.Count);
 
-            foreach (var c in Connections.Cast<MessagingConnection>())
+            foreach (var c in Connections)
             {
                 tasks.Add(c.Transport.Output.WriteAsync(new Message(
                     payload.Preserve(),

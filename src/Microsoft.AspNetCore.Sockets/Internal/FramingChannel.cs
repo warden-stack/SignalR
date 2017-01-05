@@ -15,7 +15,7 @@ namespace Microsoft.AspNetCore.Sockets.Internal
     /// </summary>
     public class FramingChannel : IChannelConnection<Message>, IReadableChannel<Message>, IWritableChannel<Message>
     {
-        private readonly IPipelineConnection _pipeline;
+        private readonly IPipelineConnection _connection;
         private readonly TaskCompletionSource<object> _tcs = new TaskCompletionSource<object>();
         private readonly Format _format;
 
@@ -24,15 +24,15 @@ namespace Microsoft.AspNetCore.Sockets.Internal
         public IReadableChannel<Message> Input => this;
         public IWritableChannel<Message> Output => this;
 
-        public FramingChannel(IPipelineConnection pipeline, Format format)
+        public FramingChannel(IPipelineConnection connection, Format format)
         {
-            _pipeline = pipeline;
+            _connection = connection;
             _format = format;
         }
 
         ValueTask<Message> IReadableChannel<Message>.ReadAsync(CancellationToken cancellationToken)
         {
-            var awaiter = _pipeline.Input.ReadAsync();
+            var awaiter = _connection.Input.ReadAsync();
             if (awaiter.IsCompleted)
             {
                 return new ValueTask<Message>(ReadSync(awaiter.GetResult(), cancellationToken));
@@ -61,7 +61,7 @@ namespace Microsoft.AspNetCore.Sockets.Internal
         Task IWritableChannel<Message>.WriteAsync(Message item, CancellationToken cancellationToken)
         {
             // Just dump the message on to the pipeline
-            var buffer = _pipeline.Output.Alloc();
+            var buffer = _connection.Output.Alloc();
             buffer.Append(item.Payload.Buffer);
             return buffer.FlushAsync();
         }
@@ -80,7 +80,7 @@ namespace Microsoft.AspNetCore.Sockets.Internal
 
         bool IWritableChannel<Message>.TryComplete(Exception error)
         {
-            _pipeline.Output.Complete(error);
+            _connection.Output.Complete(error);
             return true;
         }
 
@@ -97,7 +97,7 @@ namespace Microsoft.AspNetCore.Sockets.Internal
 
             // Preserve the buffer and advance the pipeline past it
             var preserved = buffer.Preserve();
-            _pipeline.Input.Advance(buffer.End);
+            _connection.Input.Advance(buffer.End);
 
             var msg = new Message(preserved, _format, endOfMessage: true);
 
@@ -113,7 +113,7 @@ namespace Microsoft.AspNetCore.Sockets.Internal
         public void Dispose()
         {
             _tcs.TrySetResult(null);
-            _pipeline.Dispose();
+            _connection.Dispose();
         }
     }
 }
