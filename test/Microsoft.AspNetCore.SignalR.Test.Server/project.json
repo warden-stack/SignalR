@@ -15,7 +15,9 @@
     "Microsoft.AspNetCore.Server.IISIntegration.Tools": "1.0.0-preview2-final"
   },
   "frameworks": {
-    "netcoreapp1.2": { }
+    "netcoreapp1.2": { },
+    "net46": {
+    }
   },
   "buildOptions": {
     "emitEntryPoint": true,
