@@ -7,6 +7,7 @@ using System.IO.Pipelines;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Channels;
 using Microsoft.AspNetCore.Sockets;
 
 namespace SocketsSample.EndPoints
@@ -23,7 +24,7 @@ namespace SocketsSample.EndPoints
 
             try
             {
-                while (!connection.Transport.Input.Completion.IsCompleted)
+                while (true)
                 {
                     using (var message = await connection.Transport.Input.ReadAsync())
                     {
@@ -31,6 +32,10 @@ namespace SocketsSample.EndPoints
                         await Broadcast(message.Payload.Buffer, message.MessageFormat, message.EndOfMessage);
                     }
                 }
+            }
+            catch (Exception ex) when (ex.GetType().IsNested && ex.GetType().DeclaringType == typeof(Channel))
+            {
+                // Gross that we have to catch this this way. See https://github.com/dotnet/corefxlab/issues/1068
             }
             finally
             {

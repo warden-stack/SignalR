@@ -42,12 +42,16 @@ namespace Microsoft.AspNetCore.Sockets.Transports
                     await message.Payload.Buffer.CopyToAsync(context.Response.Body);
                 }
             }
+            catch (Exception ex) when (ex.GetType().IsNested && ex.GetType().DeclaringType == typeof(Channel))
+            {
+                // Gross that we have to catch this this way. See https://github.com/dotnet/corefxlab/issues/1068
+            }
             catch (OperationCanceledException)
             {
                 // Suppress the exception
                 _logger.LogDebug("Client disconnected from Long Polling endpoint.");
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError("Error reading next message from Application: {0}", ex);
                 throw;

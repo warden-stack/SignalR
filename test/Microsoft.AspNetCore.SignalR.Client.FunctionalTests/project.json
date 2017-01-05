@@ -23,7 +23,8 @@
         }
       }
     },
-    "net46": {}
+    "net46": {
+    }
   },
   "testRunner": "xunit"
 }

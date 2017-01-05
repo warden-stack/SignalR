@@ -24,10 +24,7 @@
     },
     "net46": {
       "dependencies": {
-        "System.Security.Claims": {
-          "version": "4.0.1",
-          "type": "build"
-        }
+        "System.Security.Claims": "4.0.1"
       }
     }
   },

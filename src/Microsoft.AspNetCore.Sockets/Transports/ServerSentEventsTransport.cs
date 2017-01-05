@@ -28,12 +28,19 @@ namespace Microsoft.AspNetCore.Sockets.Transports
             context.Response.Headers["Content-Encoding"] = "identity";
             await context.Response.Body.FlushAsync();
 
-            while (!_application.Completion.IsCompleted)
+            try
             {
-                using (var message = await _application.ReadAsync())
+                while (true)
                 {
-                    await Send(context, message);
+                    using (var message = await _application.ReadAsync())
+                    {
+                        await Send(context, message);
+                    }
                 }
+            }
+            catch (Exception ex) when (ex.GetType().IsNested && ex.GetType().DeclaringType == typeof(Channel))
+            {
+                // Gross that we have to catch this this way. See https://github.com/dotnet/corefxlab/issues/1068
             }
         }
 
